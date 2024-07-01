@@ -5,3 +5,6 @@ edition = "2021"
 
 [dependencies]
 actix-web = "4.8.0"
+
+utoipa = "4.2.3"
+utoipa-swagger-ui = { version = "7.1.0", features = ["actix-web"] }

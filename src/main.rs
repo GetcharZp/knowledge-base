@@ -1,16 +1,12 @@
-use actix_web::{App, get, HttpServer, Responder};
+mod router;
+mod handler;
+mod service;
+mod models;
+mod dao;
 
-#[get("/ping")]
-async fn ping() -> impl Responder {
-    "pong"
-}
+use actix_web::{Responder};
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
-    HttpServer::new(|| {
-        App::new().service(ping)
-    })
-        .bind(("0.0.0.0", 8000))?
-        .run()
-        .await
+    router::run_server().await
 }
