@@ -2,6 +2,7 @@ use actix_web::{App, HttpServer};
 use actix_web::web;
 use utoipa::OpenApi;
 use utoipa_swagger_ui::SwaggerUi;
+use crate::handler::admin;
 use crate::handler::ping::ping;
 
 #[derive(OpenApi)]
@@ -13,14 +14,24 @@ use crate::handler::ping::ping;
     ),
     paths(
         crate::handler::ping::ping,
+        crate::handler::admin::user::create,
     ),
-    components(schemas()),
+    components(schemas(
+        crate::handler::admin::user::UserCreateRequest,
+    )),
 )]
 struct ApiDoc;
 
 fn config_app(cfg: &mut web::ServiceConfig) {
     cfg
         .service(web::resource("/ping").route(web::get().to(ping)))
+        .service(
+            web::scope("/api/v1").
+                service(
+                    web::scope("/admin")
+                        .service(web::resource("/user/create").route(web::post().to(admin::user::create)))
+                )
+        )
         .service(
             SwaggerUi::new("/swagger-ui/{_:.*}")
                 .url("/api-docs/openapi.json", ApiDoc::openapi()),

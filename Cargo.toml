@@ -8,3 +8,13 @@ actix-web = "4.8.0"
 
 utoipa = "4.2.3"
 utoipa-swagger-ui = { version = "7.1.0", features = ["actix-web"] }
+
+elasticsearch = "7.17.7-alpha.1"
+tokio = { version = "1.39.3", features = ["full"] }
+
+serde = { version = "1.0.209", features = ["derive"] }
+serde_json = "1.0.127"
+
+chrono = "0.4.38"
+uuid = { version = "1.10.0", features = ["v4"] }
+
