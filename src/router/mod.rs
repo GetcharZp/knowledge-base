@@ -15,9 +15,13 @@ use crate::handler::ping::ping;
     paths(
         crate::handler::ping::ping,
         crate::handler::admin::user::create,
+        crate::handler::admin::user::list,
     ),
     components(schemas(
         crate::handler::admin::user::UserCreateRequest,
+        crate::handler::admin::user::UserListRequest,
+        crate::handler::admin::user::UserListReply,
+        crate::dao::user_basic_dao::UserBasicDao,
     )),
 )]
 struct ApiDoc;
@@ -30,6 +34,7 @@ fn config_app(cfg: &mut web::ServiceConfig) {
                 service(
                     web::scope("/admin")
                         .service(web::resource("/user/create").route(web::post().to(admin::user::create)))
+                        .service(web::resource("/user/list").route(web::get().to(admin::user::list)))
                 )
         )
         .service(
