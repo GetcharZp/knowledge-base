@@ -1,12 +1,12 @@
 use std::error::Error;
 use std::io;
 use std::io::ErrorKind;
-use elasticsearch::{IndexParts, SearchParts};
+use elasticsearch::{IndexParts, SearchParts, UpdateParts};
 use serde_json::{from_value, json, Value};
 use uuid::Uuid;
 use crate::dao::init::es_client;
 use crate::dao::user_basic_dao::{USER_BASIC_DAO, UserBasicDao};
-use crate::handler::admin::user::{UserCreateRequest, UserListRequest, UserListReply};
+use crate::handler::admin::user::{UserCreateRequest, UserListRequest, UserListReply, UserResetPasswordRequest};
 
 pub async fn create_service(req: UserCreateRequest) -> Result<(), Box<dyn Error>> {
     // 1. es client
@@ -52,6 +52,45 @@ pub async fn create_service(req: UserCreateRequest) -> Result<(), Box<dyn Error>
     Ok(())
 }
 
+pub async fn reset_password_service(req: UserResetPasswordRequest) -> Result<(), Box<dyn Error>> {
+    // 1. es client
+    let client = es_client();
+
+    // 2. 获取 user 信息
+    let response = client.search(SearchParts::Index(&[USER_BASIC_DAO]))
+        .body(json!({
+            "query": {
+                "term": {
+                    "uuid.keyword": req.uuid
+                }
+            }
+        }))
+        .send()
+        .await;
+    if let Err(e) = response {
+        return Err(Box::new(e))
+    }
+    let response = response?;
+    let response_body = response.json::<Value>().await?;
+    println!("{}", response_body);
+
+    let user_id = response_body["hits"]["hits"][0]["_id"].as_str()
+        .ok_or_else(|| io::Error::new(ErrorKind::NotFound, "获取用户信息失败"))?;
+
+    // 3. save
+    client.update(UpdateParts::IndexId(USER_BASIC_DAO, user_id))
+        .body(json!({
+            "doc": {
+                "password": req.password,
+                "update_at": chrono::Utc::now().timestamp_millis()
+            }
+        }))
+        .send()
+        .await?;
+
+    Ok(())
+}
+
 pub async fn list_service(req: UserListRequest) -> Result<UserListReply, Box<dyn Error>> {
     // 1. es client
     let client = es_client();
@@ -81,7 +120,7 @@ pub async fn list_service(req: UserListRequest) -> Result<UserListReply, Box<dyn
     }
     let response = response?;
     let response_body = response.json::<Value>().await?;
-    println!("===> {}", response_body);
+
     // total
     let total = response_body["hits"]["total"]["value"].as_i64().unwrap();
     // list
