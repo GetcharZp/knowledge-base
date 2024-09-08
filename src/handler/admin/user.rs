@@ -36,7 +36,7 @@ pub async fn create(req: web::Json<UserCreateRequest>) -> impl Responder {
 
 #[derive(Serialize, Deserialize, ToSchema)]
 pub struct UserResetPasswordRequest {
-    /// 用户名
+    /// 唯一标识
     pub uuid: String,
     /// 密码
     pub password: String,

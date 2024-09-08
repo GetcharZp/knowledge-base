@@ -2,7 +2,7 @@ use actix_web::{App, HttpServer};
 use actix_web::web;
 use utoipa::OpenApi;
 use utoipa_swagger_ui::SwaggerUi;
-use crate::handler::admin;
+use crate::handler::{admin, user};
 use crate::handler::ping::ping;
 
 #[derive(OpenApi)]
@@ -14,11 +14,13 @@ use crate::handler::ping::ping;
     ),
     paths(
         crate::handler::ping::ping,
+        crate::handler::user::login,
         crate::handler::admin::user::create,
         crate::handler::admin::user::reset_password,
         crate::handler::admin::user::list,
     ),
     components(schemas(
+        crate::handler::user::UserLoginRequest,
         crate::handler::admin::user::UserCreateRequest,
         crate::handler::admin::user::UserResetPasswordRequest,
         crate::handler::admin::user::UserListRequest,
@@ -33,6 +35,7 @@ fn config_app(cfg: &mut web::ServiceConfig) {
         .service(web::resource("/ping").route(web::get().to(ping)))
         .service(
             web::scope("/api/v1").
+                service(web::resource("/login").route(web::post().to(user::login))).
                 service(
                     web::scope("/admin")
                         .service(web::resource("/user/create").route(web::post().to(admin::user::create)))

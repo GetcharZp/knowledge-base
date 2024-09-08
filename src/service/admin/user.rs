@@ -72,7 +72,6 @@ pub async fn reset_password_service(req: UserResetPasswordRequest) -> Result<(),
     }
     let response = response?;
     let response_body = response.json::<Value>().await?;
-    println!("{}", response_body);
 
     let user_id = response_body["hits"]["hits"][0]["_id"].as_str()
         .ok_or_else(|| io::Error::new(ErrorKind::NotFound, "获取用户信息失败"))?;
