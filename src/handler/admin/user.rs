@@ -85,7 +85,10 @@ pub struct UserListReply {
     responses(
         (status = 200, description = "用户列表", body = UserListReply)
     ),
-    tag = "超管模块-用户管理"
+    tag = "超管模块-用户管理",
+    security(
+        ("Authorization" = [])
+    )
 )]
 pub async fn list(req: web::Query<UserListRequest>) -> impl Responder {
     let reply = list_service(req.into_inner()).await;

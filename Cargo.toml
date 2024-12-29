@@ -19,3 +19,4 @@ chrono = "0.4.38"
 uuid = { version = "1.10.0", features = ["v4"] }
 
 jsonwebtoken = "9.3.0"
+futures-util = "0.3.30"

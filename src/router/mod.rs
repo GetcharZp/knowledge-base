@@ -1,9 +1,12 @@
 use actix_web::{App, HttpServer};
 use actix_web::web;
-use utoipa::OpenApi;
+use utoipa::{Modify, OpenApi};
+use utoipa::openapi::security::{ApiKey, ApiKeyValue, SecurityScheme};
 use utoipa_swagger_ui::SwaggerUi;
 use crate::handler::{admin, user};
 use crate::handler::ping::ping;
+use crate::middleware;
+
 
 #[derive(OpenApi)]
 #[openapi(
@@ -27,8 +30,22 @@ use crate::handler::ping::ping;
         crate::handler::admin::user::UserListReply,
         crate::dao::user_basic_dao::UserBasicDao,
     )),
+    modifiers(&SecurityAddon)
 )]
 struct ApiDoc;
+
+struct SecurityAddon;
+
+impl Modify for SecurityAddon {
+    fn modify(&self, openapi: &mut utoipa::openapi::OpenApi) {
+        if let Some(components) = openapi.components.as_mut() {
+            components.add_security_scheme(
+                "Authorization",
+                SecurityScheme::ApiKey(ApiKey::Header(ApiKeyValue::new("Authorization"))),
+            )
+        }
+    }
+}
 
 fn config_app(cfg: &mut web::ServiceConfig) {
     cfg
@@ -40,7 +57,7 @@ fn config_app(cfg: &mut web::ServiceConfig) {
                     web::scope("/admin")
                         .service(web::resource("/user/create").route(web::post().to(admin::user::create)))
                         .service(web::resource("/user/reset/password").route(web::post().to(admin::user::reset_password)))
-                        .service(web::resource("/user/list").route(web::get().to(admin::user::list)))
+                        .service(web::resource("/user/list").wrap(middleware::auth::AuthMiddleware).route(web::get().to(admin::user::list)))
                 )
         )
         .service(
