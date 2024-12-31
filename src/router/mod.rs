@@ -5,7 +5,7 @@ use utoipa::openapi::security::{ApiKey, ApiKeyValue, SecurityScheme};
 use utoipa_swagger_ui::SwaggerUi;
 use crate::handler::{admin, user};
 use crate::handler::ping::ping;
-use crate::middleware;
+use crate::middleware::auth::AuthMiddleware;
 
 
 #[derive(OpenApi)]
@@ -54,10 +54,10 @@ fn config_app(cfg: &mut web::ServiceConfig) {
             web::scope("/api/v1").
                 service(web::resource("/login").route(web::post().to(user::login))).
                 service(
-                    web::scope("/admin")
+                    web::scope("/admin").wrap(AuthMiddleware)
                         .service(web::resource("/user/create").route(web::post().to(admin::user::create)))
                         .service(web::resource("/user/reset/password").route(web::post().to(admin::user::reset_password)))
-                        .service(web::resource("/user/list").wrap(middleware::auth::AuthMiddleware).route(web::get().to(admin::user::list)))
+                        .service(web::resource("/user/list").route(web::get().to(admin::user::list)))
                 )
         )
         .service(

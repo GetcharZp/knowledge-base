@@ -5,6 +5,10 @@ use actix_web::{
     Error,
 };
 use futures_util::future::LocalBoxFuture;
+use jsonwebtoken::{decode, DecodingKey};
+use serde_json::json;
+use crate::define::JWT_SECRET;
+use crate::handler::user::UserClaim;
 
 // There are two steps in middleware processing.
 // 1. Middleware initialization, middleware factory gets called with
@@ -49,14 +53,25 @@ where
     forward_ready!(service);
 
     fn call(&self, req: ServiceRequest) -> Self::Future {
-        println!("Hi from start. You requested: {}", req.path());
+        let token = req.headers().get("Authorization");
+        if token.is_none() {
+            return Box::pin(async move {
+                Err(actix_web::error::ErrorUnauthorized(json!({"code": 401, "msg": "token is empty"})))
+            });
+        }
+        let token = token.unwrap().to_str().unwrap();
+        let result = decode::<UserClaim>(token, &DecodingKey::from_secret(JWT_SECRET.as_ref()), &jsonwebtoken::Validation::default());
+        if result.is_err() {
+            return Box::pin(async move {
+                Err(actix_web::error::ErrorUnauthorized(json!({"code": 401, "msg": "token is invalid"})))
+            });
+        }
 
         let fut = self.service.call(req);
 
         Box::pin(async move {
             let res = fut.await?;
 
-            println!("Hi from response");
             Ok(res)
         })
     }
