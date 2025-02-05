@@ -1,9 +1,6 @@
 use std::future::{ready, Ready};
 
-use actix_web::{
-    dev::{forward_ready, Service, ServiceRequest, ServiceResponse, Transform},
-    Error,
-};
+use actix_web::{dev::{forward_ready, Service, ServiceRequest, ServiceResponse, Transform}, Error, HttpMessage};
 use futures_util::future::LocalBoxFuture;
 use jsonwebtoken::{decode, DecodingKey};
 use serde_json::json;
@@ -66,7 +63,7 @@ where
                 Err(actix_web::error::ErrorUnauthorized(json!({"code": 401, "msg": "token is invalid"})))
             });
         }
-
+        req.extensions_mut().insert(result.unwrap().claims);
         let fut = self.service.call(req);
 
         Box::pin(async move {

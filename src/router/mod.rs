@@ -18,12 +18,14 @@ use crate::middleware::auth::AuthMiddleware;
     paths(
         crate::handler::ping::ping,
         crate::handler::user::login,
+        crate::handler::user::password_modify,
         crate::handler::admin::user::create,
         crate::handler::admin::user::reset_password,
         crate::handler::admin::user::list,
     ),
     components(schemas(
         crate::handler::user::UserLoginRequest,
+        crate::handler::user::PasswordModifyRequest,
         crate::handler::admin::user::UserCreateRequest,
         crate::handler::admin::user::UserResetPasswordRequest,
         crate::handler::admin::user::UserListRequest,
@@ -53,6 +55,7 @@ fn config_app(cfg: &mut web::ServiceConfig) {
         .service(
             web::scope("/api/v1").
                 service(web::resource("/login").route(web::post().to(user::login))).
+                service(web::resource("/password/modify").wrap(AuthMiddleware).route(web::post().to(user::password_modify))).
                 service(
                     web::scope("/admin").wrap(AuthMiddleware)
                         .service(web::resource("/user/create").route(web::post().to(admin::user::create)))
